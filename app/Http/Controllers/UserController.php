@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -136,5 +137,34 @@ class UserController extends Controller
             'count'   => count($users),
             'user'    => $users
         ], 200);
+    }
+
+
+    public function guardLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'login'    => 'required|string', 
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        $guard = Guard::where($loginField, $request->login)->first();
+
+        if (!$guard || !Hash::check($request->password, $guard->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $token = $guard->createToken('guard_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'token'   => $token,
+            'guard'   => $guard,
+        ]);
     }
 }

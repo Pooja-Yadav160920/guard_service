@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Auth\Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 
 class Guard extends Model implements AuthenticatableContract
 {
-    use Authenticatable;
+    use HasApiTokens, Authenticatable;
 
     protected $fillable = [
         'name',
