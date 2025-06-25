@@ -23,10 +23,11 @@ class User extends Authenticatable
         'password',
         'role_id'
     ];
+    
 
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(\App\Models\Role::class);
     }
 
     /**

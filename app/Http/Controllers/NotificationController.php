@@ -4,21 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Notification;
 use App\Models\Guard;
-
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class NotificationController extends Controller
 {
-  
-     public function index()
+    public function index()
     {
+        if (!checkPermission('show-notification')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $notifications = Notification::latest()->get();
         return response()->json(['notifications' => $notifications]);
     }
 
-     public function store(Request $request)
+    public function store(Request $request)
     {
+        if (!checkPermission('add-notification')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $request->validate([
             'guard_id' => 'required|exists:guards,id',
             'type'     => 'required|string',
@@ -42,22 +48,30 @@ class NotificationController extends Controller
         ]);
     }
 
-     public function respond($id)
+    public function respond($id)
     {
+        if (!checkPermission('respond-notification')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $notification = Notification::findOrFail($id);
         $notification->responded = true;
         $notification->responded_at = Carbon::now();
         $notification->save();
 
-        return response()->json(['message' => 'Notification marked as responded',
-            'data'=> $notification,
-    ]);
+        return response()->json([
+            'message' => 'Notification marked as responded',
+            'data'    => $notification,
+        ]);
     }
 
     public function guardNotifications($guard_id)
     {
+        if (!checkPermission('show-notification')) { // Or 'guard-notification' if more granular
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $notifications = Notification::where('guard_id', $guard_id)->latest()->get();
         return response()->json(['notifications' => $notifications]);
     }
-
 }

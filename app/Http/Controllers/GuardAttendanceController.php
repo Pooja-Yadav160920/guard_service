@@ -9,9 +9,12 @@ use Carbon\Carbon;
 
 class GuardAttendanceController extends Controller
 {
-
     public function listAttendances(Request $request)
     {
+        if (!checkPermission('show-attendance')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $query = GuardAttendance::query();
 
         if ($request->has('guard_id')) {
@@ -27,8 +30,12 @@ class GuardAttendanceController extends Controller
         return response()->json($attendances);
     }
 
-   public function clockIn(Request $request)
+    public function clockIn(Request $request)
     {
+        if (!checkPermission('guard-clockin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $this->validate($request, [
             'guard_id' => 'required|exists:guards,id',
             'shift_id' => 'required|exists:shifts,id',
@@ -45,7 +52,6 @@ class GuardAttendanceController extends Controller
 
         $assignedLat = $guard->location->latitude;
         $assignedLong = $guard->location->longitude;
-
         $currentLat = $request->latitude;
         $currentLong = $request->longitude;
 
@@ -80,9 +86,12 @@ class GuardAttendanceController extends Controller
         return response()->json(['message' => 'Clock-in successful', 'data' => $attendance], 201);
     }
 
-
-   public function clockOut(Request $request)
+    public function clockOut(Request $request)
     {
+        if (!checkPermission('guard-clockout')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $this->validate($request, [
             'guard_id' => 'required|exists:guards,id',
             'latitude' => 'required|numeric',
@@ -106,24 +115,22 @@ class GuardAttendanceController extends Controller
             return response()->json(['message' => 'Assigned location is missing for the guard.'], 422);
         }
 
-       $distance = $this->calculateDistance(
+        $distance = $this->calculateDistance(
             $request->latitude,
             $request->longitude,
             $location->latitude,
             $location->longitude
         );
 
-        if ($distance > 0.2) { // 0.2 km = 200 meters
+        if ($distance > 0.2) {
             return response()->json(['message' => 'You are not at your assigned location. Please move closer to your designated area.'], 403);
         }
 
         $now = Carbon::now();
         $clockIn = Carbon::parse($attendance->clock_in);
-
         $workedDuration = $clockIn->diff($now);
         $workedHours = $workedDuration->format('%H:%I:%S');
 
-        // Early departure check
         $shift = $attendance->shift;
         $earlyDeparture = false;
 
@@ -141,10 +148,12 @@ class GuardAttendanceController extends Controller
         return response()->json(['message' => 'Clock-out successful', 'data' => $attendance]);
     }
 
-
-
     public function todayAttendance($guardId)
     {
+        if (!checkPermission('show-attendance')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $today = Carbon::today();
         $attendance = GuardAttendance::where('guard_id', $guardId)
             ->whereDate('created_at', $today)
@@ -157,21 +166,18 @@ class GuardAttendanceController extends Controller
         return response()->json($attendance);
     }
 
-
     protected function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $earthRadius = 6371; // kilometers
+        $earthRadius = 6371;
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
         $lat1 = deg2rad($lat1);
         $lat2 = deg2rad($lat2);
 
         $a = sin($dLat / 2) * sin($dLat / 2) +
-            sin($dLon / 2) * sin($dLon / 2) * cos($lat1) * cos($lat2);
+             sin($dLon / 2) * sin($dLon / 2) * cos($lat1) * cos($lat2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        return $earthRadius * $c; // distance in km
+
+        return $earthRadius * $c;
     }
-    
-
-
 }

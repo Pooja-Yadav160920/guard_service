@@ -11,22 +11,28 @@ class RoleController extends Controller
 {
     public function index()
     {
+         if (!checkPermission('show-role')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
         $roles = Role::all();
         return response()->json($roles);
     }
 
-    public function create()
-    {
-        //
-    }
-
+    
     public function store(Request $request)
     {
+
+
+        if (!checkPermission('add-role')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
 
             "name"=> "required|string",
 
         ]);
+
 
         if($validator->fails()){
             return response()->json([
@@ -46,6 +52,10 @@ class RoleController extends Controller
    
     public function update(Request $request, Role $role)
     {
+
+         if (!checkPermission('edit-role')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
         $validator = Validator::make($request->all(), [
               "name"=> "required|string",
               ]);
@@ -64,10 +74,12 @@ class RoleController extends Controller
 
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */public function destroy(Role $role)
+        public function destroy(Role $role)
         {
+
+             if (!checkPermission('delete-role')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+            }
             $role->delete();
 
             return response()->json([

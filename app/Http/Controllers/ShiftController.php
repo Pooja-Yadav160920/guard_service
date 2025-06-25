@@ -9,12 +9,20 @@ class ShiftController extends Controller
 {
     public function index()
     {
+        if (!checkPermission('show-shift')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $shifts = Shift::all();
         return response()->json(['data' => $shifts], 200);
     }
 
     public function show($id)
     {
+        if (!checkPermission('show-shift')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $shift = Shift::find($id);
 
         if (!$shift) {
@@ -26,13 +34,17 @@ class ShiftController extends Controller
 
     public function store(Request $request)
     {
+        if (!checkPermission('add-shift')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $this->validate($request, [
             'name'       => 'required|string',
             'start_time' => 'required|date_format:H:i',
             'end_time'   => 'required|date_format:H:i',
             'days'       => 'nullable|array',
             'days.*'     => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
-            'is_active' => 'required|boolean',
+            'is_active'  => 'required|boolean',
         ]);
 
         $shift = new Shift();
@@ -48,6 +60,10 @@ class ShiftController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!checkPermission('edit-shift')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $shift = Shift::find($id);
 
         if (!$shift) {
@@ -60,17 +76,20 @@ class ShiftController extends Controller
             'end_time'   => 'required|date_format:H:i',
             'days'       => 'nullable|array',
             'days.*'     => 'in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
-            'is_active' => 'required|boolean',
-            
+            'is_active'  => 'required|boolean',
         ]);
 
-        $shift->update($request->only(['name', 'start_time', 'end_time', 'days','is_active']));
+        $shift->update($request->only(['name', 'start_time', 'end_time', 'days', 'is_active']));
 
         return response()->json(['message' => 'Shift updated successfully', 'data' => $shift], 200);
     }
 
     public function destroy($id)
     {
+        if (!checkPermission('delete-shift')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $shift = Shift::find($id);
 
         if (!$shift) {

@@ -9,6 +9,8 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\GuardAttendanceController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RolePermissionController;
+
 
 
 /*
@@ -70,6 +72,8 @@ Route::prefix('attendance')->group(function () {
     Route::get('/list', [GuardAttendanceController::class, 'listAttendances']);
 });
 
+
+
 Route::middleware('auth:sanctum')->get('/profile', [UserController::class, 'profile']);
 Route::put('/users/{id}/profile', [UserController::class, 'updateProfile']);
 Route::delete('/users/{id}/profile', [UserController::class,'destroyProfile']);
@@ -81,3 +85,9 @@ Route::post('/notifications', [NotificationController::class, 'store']);
 Route::post('/notifications/{id}/respond', [NotificationController::class, 'respond']);
 Route::get('/guards/{guard_id}/notifications', [NotificationController::class, 'guardNotifications']);
 
+Route::prefix('role-permissions')->group(function () {
+    Route::get('metadata', [RolePermissionController::class, 'metadata']); 
+    Route::post('/', [RolePermissionController::class, 'store']);
+    Route::get('{role_id}', [RolePermissionController::class, 'show']);
+    Route::put('{role_id}', [RolePermissionController::class, 'update']);
+});
